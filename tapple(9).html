@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAPPLE</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   TAPPLE — terminal / code aesthetic
+   black bg · white text · klein blue #0047AB · red #FF2020 · yellow #FFE500
+   IBM Plex Mono throughout. No gradients. No border-radius. Flat.
+================================================================ */
+:root {
+  --bg:     #000000;
+  --fg:     #FFFFFF;
+  --blue:   #0047AB;
+  --red:    #FF2020;
+  --yellow: #FFE500;
+  --dim:    rgba(255,255,255,0.35);
+  --dim2:   rgba(255,255,255,0.12);
+  --mono:   'IBM Plex Mono', monospace;
+  --max:    600px;
+  --timer:  10;   /* default, overridden by settings */
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--fg);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+body{cursor:crosshair}
+button,input,select,textarea{cursor:crosshair;font-family:var(--mono)}
+a{color:var(--blue)}
+
+/* ── screens ── */
+.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.screen.active{display:flex}
+
+/* ── logo ── */
+.logo{
+  font-size:clamp(2.8rem,12vw,5.5rem);font-weight:700;letter-spacing:.2em;
+  color:var(--fg);line-height:1;
+  text-shadow:0 0 6px rgba(255,255,255,.6),0 0 20px rgba(0,71,171,.5);
+}
+.tagline{font-size:.6rem;letter-spacing:.4em;color:var(--dim);margin-top:4px;margin-bottom:28px;text-transform:uppercase}
+
+/* ── inputs ── */
+input[type=text],input[type=number],select,textarea{
+  background:var(--bg);border:1px solid var(--fg);color:var(--fg);
+  padding:8px 12px;width:100%;font-size:.85rem;outline:none;
+  transition:border-color .1s,box-shadow .1s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+input::placeholder,textarea::placeholder{color:var(--dim)}
+select option{background:var(--bg)}
+
+/* ── buttons ── */
+.btn{
+  display:block;width:100%;padding:10px 16px;
+  border:1px solid var(--fg);background:var(--bg);color:var(--fg);
+  font-size:.78rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+  position:relative;overflow:hidden;transition:color .12s;
+}
+.btn::after{content:'';position:absolute;inset:0;background:var(--fg);transform:scaleX(0);transform-origin:left;transition:transform .12s;z-index:0}
+.btn>span,.btn{position:relative;z-index:1}
+.btn:hover::after{transform:scaleX(1)}
+.btn:hover{color:var(--bg)}
+.btn:disabled{opacity:.3;pointer-events:none}
+.btn.blue{border-color:var(--blue);color:var(--blue)}
+.btn.blue::after{background:var(--blue)}
+.btn.blue:hover{color:var(--bg)}
+.btn.yellow{border-color:var(--yellow);color:var(--yellow)}
+.btn.yellow::after{background:var(--yellow)}
+.btn.yellow:hover{color:var(--bg)}
+.btn.red{border-color:var(--red);color:var(--red)}
+.btn.red::after{background:var(--red)}
+.btn.red:hover{color:var(--bg)}
+.btn.sm{padding:6px 10px;font-size:.68rem;width:auto}
+
+/* ── labels / sections ── */
+.lbl{font-size:.58rem;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:5px}
+.divider{display:flex;align-items:center;gap:10px;color:var(--dim);font-size:.6rem;letter-spacing:.2em;margin:10px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--dim2)}
+
+/* ── error ── */
+.err{border:1px solid var(--red);color:var(--red);padding:7px 10px;font-size:.72rem;display:none;margin-top:6px;line-height:1.5}
+.err.on{display:block}
+
+/* ── banner ── */
+.banner{border:1px solid var(--yellow);color:var(--yellow);padding:9px 12px;font-size:.7rem;line-height:1.6;width:100%;max-width:var(--max);margin-bottom:10px}
+
+/* ================================================================
+   HOME
+================================================================ */
+.home-wrap{width:100%;max-width:var(--max);display:flex;flex-direction:column;gap:8px}
+.home-split{display:grid;grid-template-columns:1fr 1px 1fr;border:1px solid var(--dim2)}
+.split-div{background:var(--dim2)}
+.home-col{padding:16px}
+
+/* ================================================================
+   LOBBY
+================================================================ */
+#lobby-screen{justify-content:flex-start;padding-top:24px;gap:10px}
+.lobby-wrap{width:100%;max-width:var(--max);display:flex;flex-direction:column;gap:8px}
+
+.code-box{border:1px solid var(--blue);padding:14px;text-align:center;box-shadow:inset 0 0 20px rgba(0,71,171,.06)}
+.code-box-lbl{font-size:.55rem;letter-spacing:.3em;color:var(--blue);margin-bottom:4px}
+.code-digits{font-size:clamp(2.4rem,14vw,4rem);font-weight:700;letter-spacing:.5em;
+  text-shadow:0 0 8px rgba(255,255,255,.4),0 0 24px rgba(0,71,171,.6);line-height:1.1}
+.code-hint{font-size:.58rem;color:var(--dim);margin-top:4px;letter-spacing:.08em}
+
+.section-box{border:1px solid var(--dim2);padding:14px}
+.section-box+.section-box{margin-top:8px}
+
+.player-list{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.player-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--dim2);animation:row-in .2s ease}
+@keyframes row-in{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+.player-dot{width:7px;height:7px;flex-shrink:0}
+.player-name{font-size:.78rem;flex:1;letter-spacing:.06em}
+.player-tag{font-size:.55rem;letter-spacing:.12em;padding:2px 5px;border:1px solid var(--dim2);color:var(--dim)}
+.player-tag.host{border-color:var(--yellow);color:var(--yellow)}
+.player-tag.you{border-color:var(--blue);color:var(--blue)}
+
+/* settings grid */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.setting-item label{font-size:.58rem;letter-spacing:.2em;color:var(--dim);display:block;margin-bottom:4px;text-transform:uppercase}
+.setting-item input,.setting-item select{padding:6px 8px;font-size:.78rem}
+.setting-item.full{grid-column:1/-1}
+
+.lobby-btns{display:flex;gap:6px;margin-top:4px}
+.lobby-status{font-size:.65rem;color:var(--dim);letter-spacing:.1em;text-align:center;padding:6px}
+
+/* ================================================================
+   GAME
+================================================================ */
+#game-screen{justify-content:flex-start;padding:0 16px 10px;gap:0}
+
+/* hud */
+.hud{width:100%;max-width:var(--max);display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;border-bottom:1px solid var(--dim2);margin-bottom:6px;flex-shrink:0}
+.hud-left{font-size:.6rem;letter-spacing:.18em;color:var(--dim)}
+.hud-scores{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.score-pip{font-size:.58rem;padding:2px 6px;border:1px solid var(--dim2);color:var(--dim);white-space:nowrap;transition:all .2s}
+.score-pip.active{border-color:var(--blue);color:var(--blue)}
+
+/* category */
+.cat-area{width:100%;max-width:var(--max);text-align:center;padding:8px 0;flex-shrink:0}
+.cat-lbl{font-size:.52rem;letter-spacing:.35em;color:var(--dim);margin-bottom:3px}
+.cat-name{font-size:clamp(1.2rem,4.5vw,2rem);font-weight:700;letter-spacing:.06em;animation:cat-in .3s ease}
+@keyframes cat-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* turn / timer row */
+.game-row{width:100%;max-width:var(--max);display:flex;align-items:stretch;gap:8px;margin-bottom:5px;flex-shrink:0}
+.turn-box{flex:1;border:1px solid var(--dim2);padding:8px 12px;transition:border-color .2s,box-shadow .2s}
+.turn-box.active{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 0 12px rgba(0,71,171,.25)}
+.turn-sublbl{font-size:.5rem;letter-spacing:.25em;color:var(--dim);margin-bottom:2px}
+.turn-name{font-size:.9rem;font-weight:500;letter-spacing:.08em}
+.turn-name.you{color:var(--blue)}
+
+.timer-box{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid var(--dim2);padding:6px 12px;min-width:60px;flex-shrink:0}
+.timer-num{font-size:1.8rem;font-weight:700;line-height:1;transition:color .2s}
+.timer-track{width:100%;height:2px;background:var(--dim2);margin-top:4px}
+.timer-fill{height:100%;width:100%;transition:width .18s linear,background .2s}
+
+/* word-input mode */
+.word-input-wrap{width:100%;max-width:var(--max);display:none;margin-bottom:5px;flex-shrink:0}
+.word-input-wrap.show{display:flex;gap:6px}
+.word-input-wrap input{flex:1;font-size:.9rem;text-transform:uppercase;letter-spacing:.1em}
+.word-input-wrap button{width:auto;padding:8px 14px;font-size:.72rem;flex-shrink:0}
+
+/* locked notice */
+.locked{width:100%;max-width:var(--max);font-size:.6rem;letter-spacing:.2em;color:var(--blue);
+  text-align:center;padding:3px 0;display:none}
+.locked.show{display:block}
+
+/* ── LETTER GRID ── */
+.alpha-wrap{width:100%;max-width:var(--max);flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0}
+.alpha-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:4px;width:100%;
+}
+/* last row (5 letters) centered */
+.letter-btn{
+  aspect-ratio:1;
+  border:1px solid rgba(255,255,255,.25);background:var(--bg);color:rgba(255,255,255,.75);
+  font-size:.78rem;font-weight:500;letter-spacing:.05em;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .1s,color .1s,background .1s,box-shadow .1s,opacity .1s;
+  position:relative;
+}
+/* inactive players: letters always visible, just dimmed */
+.letter-btn{opacity:1}
+.letter-btn.used{
+  border-color:rgba(255,255,255,.07);color:rgba(255,255,255,.12);
+  background:rgba(255,255,255,.02);
+}
+/* active turn: letters glow */
+.alpha-wrap.my-turn .letter-btn:not(.used){
+  border-color:var(--blue);color:var(--blue);
+}
+.alpha-wrap.my-turn .letter-btn:not(.used):hover{
+  background:var(--blue);color:var(--bg);box-shadow:0 0 12px rgba(0,71,171,.6);transform:scale(1.06)
+}
+/* not your turn but game active — letters shown normally */
+.alpha-wrap.watch-turn .letter-btn:not(.used){
+  border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.55);
+}
+/* press flash — juicy multi-stage */
+.letter-btn.flash{animation:ltr-flash .45s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes ltr-flash{
+  0%  {background:var(--yellow);border-color:var(--yellow);color:var(--bg);
+       box-shadow:0 0 0 0 rgba(255,229,0,.8),0 0 24px var(--yellow);
+       transform:scale(1.35)}
+  18% {box-shadow:0 0 0 8px rgba(255,229,0,.3),0 0 32px var(--yellow);
+       transform:scale(1.35)}
+  45% {background:var(--fg);border-color:var(--fg);color:var(--bg);
+       box-shadow:0 0 0 14px rgba(255,255,255,0),0 0 12px rgba(255,255,255,.3);
+       transform:scale(.88)}
+  70% {transform:scale(1.06)}
+  100%{background:var(--bg);border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.75);
+       box-shadow:none;transform:scale(1)}
+}
+/* full-alphabet clear burst */
+.letter-btn.burst{animation:ltr-burst .5s ease forwards}
+@keyframes ltr-burst{
+  0%{background:var(--yellow);border-color:var(--yellow);color:var(--bg);box-shadow:0 0 24px var(--yellow)}
+  50%{background:var(--fg);border-color:var(--fg);color:var(--bg);box-shadow:0 0 30px rgba(255,255,255,.8)}
+  100%{background:var(--bg);border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.75);box-shadow:none}
+}
+
+/* word feed */
+.word-feed{
+  width:100%;max-width:var(--max);
+  min-height:22px;max-height:44px;
+  overflow:hidden;
+  display:flex;flex-direction:column-reverse;
+  gap:2px;flex-shrink:0;margin-bottom:3px;
+}
+.word-entry{
+  font-size:.68rem;letter-spacing:.06em;color:var(--dim);
+  display:flex;align-items:baseline;gap:6px;
+  animation:word-drop .25s ease;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+@keyframes word-drop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.word-entry .we-name{font-weight:500}
+.word-entry .we-word{color:var(--fg);letter-spacing:.1em;font-weight:500}
+.word-entry .we-letter{
+  font-size:.6rem;padding:1px 4px;border:1px solid currentColor;
+  opacity:.7;flex-shrink:0;
+}
+
+/* game footer */
+.game-footer{width:100%;max-width:var(--max);display:flex;gap:6px;padding-top:6px;border-top:1px solid var(--dim2);flex-shrink:0}
+.mode-toggle{font-size:.6rem;letter-spacing:.12em;color:var(--dim);display:flex;align-items:center;gap:6px;margin-left:auto}
+.toggle-sw{width:28px;height:14px;border:1px solid var(--dim2);background:var(--bg);position:relative;cursor:crosshair;transition:border-color .12s}
+.toggle-sw.on{border-color:var(--blue)}
+.toggle-sw::after{content:'';position:absolute;top:2px;left:2px;width:8px;height:8px;background:var(--dim);transition:transform .12s,background .12s}
+.toggle-sw.on::after{transform:translateX(14px);background:var(--blue)}
+
+/* ================================================================
+   OVERLAY
+================================================================ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;
+  align-items:center;justify-content:center;padding:20px}
+.overlay.on{display:flex}
+.ov-card{
+  border:1px solid var(--fg);padding:32px 28px;text-align:center;max-width:360px;width:100%;
+  background:var(--bg);animation:ov-in .2s ease;position:relative;
+}
+.ov-card::before,.ov-card::after{content:'';position:absolute;width:10px;height:10px;border-color:var(--blue);border-style:solid}
+.ov-card::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.ov-card::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+@keyframes ov-in{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.ov-sym{font-size:2.4rem;font-weight:700;color:var(--red);display:block;margin-bottom:10px;
+  text-shadow:0 0 16px rgba(255,32,32,.5)}
+.ov-sym.ok{color:var(--yellow);text-shadow:0 0 16px rgba(255,229,0,.5)}
+.ov-title{font-size:1.3rem;font-weight:700;letter-spacing:.12em;margin-bottom:8px}
+.ov-sub{font-size:.75rem;color:var(--dim);line-height:1.7;margin-bottom:22px;letter-spacing:.04em}
+.ov-sub strong{color:var(--fg)}
+.ov-actions{display:flex;flex-direction:column;gap:8px}
+.waiting{color:var(--dim);font-size:.65rem;letter-spacing:.18em;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px}
+.spin{width:12px;height:12px;border:1px solid var(--dim2);border-top-color:var(--blue);animation:spin .5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* next-category input in overlay */
+.cat-edit{margin:10px 0;text-align:left}
+.cat-edit label{font-size:.55rem;letter-spacing:.25em;color:var(--dim);display:block;margin-bottom:4px}
+.cat-edit input{font-size:.82rem;text-transform:uppercase}
+.cat-suggestions{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.cat-sug{font-size:.6rem;padding:3px 7px;border:1px solid var(--dim2);color:var(--dim);cursor:crosshair;letter-spacing:.06em;transition:all .1s}
+.cat-sug:hover{border-color:var(--fg);color:var(--fg)}
+
+/* flash body on timeout */
+@keyframes flash-red{0%,100%{background:var(--bg)}40%{background:rgba(255,32,32,.12)}}
+body.time-up{animation:flash-red .4s ease}
+/* burst full body flash */
+@keyframes flash-yellow{0%,100%{background:var(--bg)}40%{background:rgba(255,229,0,.09)}}
+body.alpha-done{animation:flash-yellow .5s ease}
+
+/* ── SETUP MODAL ── */
+.setup-card{max-width:460px;text-align:left}
+
+/* ── SCROLLABLE LOBBY ── */
+#lobby-screen .lobby-wrap{max-height:calc(100vh - 100px);overflow-y:auto}
+
+/* responsive */
+@media(max-width:400px){
+  .alpha-grid{grid-template-columns:repeat(6,1fr)}
+  .home-split{grid-template-columns:1fr;grid-template-rows:auto 1px auto}
+  .split-div{width:100%;height:1px}
+}
+@media(max-height:680px){
+  .cat-area{padding:4px 0}
+  .hud{padding:4px 0;margin-bottom:3px}
+  .alpha-wrap{padding:2px 0}
+}
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     HOME
+================================================================ -->
+<div id="home-screen" class="screen active">
+  <div class="logo">TAPPLE</div>
+  <div class="tagline">multiplayer word game</div>
+
+  <div id="firebase-banner" class="banner" style="display:none">
+    ⚠ firebase not configured — <a href="#" onclick="showSetupModal();return false">setup instructions</a>
+  </div>
+
+  <div class="home-wrap">
+    <div style="margin-bottom:2px">
+      <span class="lbl">// callsign</span>
+      <input type="text" id="home-name" placeholder="your name" maxlength="20" autocomplete="off"
+             style="text-transform:uppercase;letter-spacing:.1em"
+             onkeydown="if(event.key==='Enter')document.getElementById('create-btn').click()"/>
+      <div id="home-error" class="err"></div>
+    </div>
+
+    <div class="home-split">
+      <div class="home-col">
+        <span class="lbl">// new game</span>
+        <button class="btn blue" id="create-btn" onclick="createLobby()" style="margin-top:6px">[ create lobby ]</button>
+      </div>
+      <div class="split-div"></div>
+      <div class="home-col">
+        <span class="lbl">// join game</span>
+        <input type="text" id="join-code" placeholder="XXXX" maxlength="4"
+               style="text-transform:uppercase;letter-spacing:.5em;font-size:1.5rem;text-align:center;font-weight:700;margin-bottom:6px"
+               oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')"
+               onkeydown="if(event.key==='Enter')joinLobby()"/>
+        <div id="join-error" class="err"></div>
+        <button class="btn" onclick="joinLobby()" style="margin-top:6px;font-size:.72rem">[ join ]</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     LOBBY
+================================================================ -->
+<div id="lobby-screen" class="screen">
+  <div class="logo" style="font-size:clamp(1.6rem,8vw,2.8rem);margin-bottom:2px">TAPPLE</div>
+
+  <div class="lobby-wrap">
+    <!-- code -->
+    <div class="code-box">
+      <div class="code-box-lbl">// room code — share this</div>
+      <div class="code-digits" id="lobby-code-text">----</div>
+      <div class="code-hint">visit this page · enter the code to join</div>
+    </div>
+
+    <!-- players -->
+    <div class="section-box">
+      <span class="lbl">// crew (<span id="player-count">0</span>/8)</span>
+      <div class="player-list" id="lobby-player-list"></div>
+      <div class="lobby-status" id="lobby-status">awaiting players…</div>
+      <div id="lobby-error" class="err"></div>
+    </div>
+
+    <!-- host settings (host only) -->
+    <div class="section-box" id="host-settings" style="display:none">
+      <span class="lbl">// game settings (host)</span>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <label>timer (seconds)</label>
+          <input type="number" id="set-timer" value="10" min="5" max="60" step="1"/>
+        </div>
+        <div class="setting-item">
+          <label>rounds</label>
+          <input type="number" id="set-rounds" value="∞" placeholder="∞" min="1" max="99" step="1" style="letter-spacing:.05em"/>
+        </div>
+        <div class="setting-item">
+          <label>word-type mode</label>
+          <select id="set-wordmode">
+            <option value="0">off (tap letters)</option>
+            <option value="1">on (type words)</option>
+          </select>
+        </div>
+        <div class="setting-item full">
+          <label>first category (leave blank = random)</label>
+          <input type="text" id="set-category" placeholder="e.g. ANIMALS" maxlength="60"
+                 style="text-transform:uppercase;letter-spacing:.06em"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="lobby-btns">
+      <button class="btn red sm" onclick="leaveLobby()" style="flex:1">[ leave ]</button>
+      <button class="btn yellow" id="start-btn" onclick="hostStartGame()" disabled style="flex:2">[ start game ]</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     GAME
+================================================================ -->
+<div id="game-screen" class="screen">
+
+  <div class="hud">
+    <div class="hud-left" id="round-badge">RND 01</div>
+    <div class="hud-scores" id="scoreboard"></div>
+  </div>
+
+  <div class="cat-area">
+    <div class="cat-lbl">// category</div>
+    <div class="cat-name" id="cat-name">—</div>
+  </div>
+
+  <div class="game-row">
+    <div class="turn-box" id="turn-banner">
+      <div class="turn-sublbl">// active player</div>
+      <div class="turn-name" id="turn-nm">—</div>
+    </div>
+    <div class="timer-box">
+      <div class="timer-num" id="timer-num">10</div>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- word-type input (toggled) -->
+  <div class="word-input-wrap" id="word-input-wrap">
+    <input type="text" id="word-input" placeholder="TYPE YOUR WORD..." maxlength="40"
+           style="text-transform:uppercase;letter-spacing:.1em"
+           onkeydown="if(event.key==='Enter')submitWord()"/>
+    <button class="btn blue" onclick="submitWord()" style="width:auto;padding:8px 14px;font-size:.72rem">[ submit ]</button>
+  </div>
+
+  <div class="locked" id="locked-banner">— wait for your turn —</div>
+
+  <!-- word feed (visible in typing mode) -->
+  <div class="word-feed" id="word-feed"></div>
+
+  <div class="alpha-wrap" id="alpha-wrap">
+    <div class="alpha-grid" id="alpha-grid"></div>
+  </div>
+
+  <div class="game-footer">
+    <button class="btn sm red" onclick="leaveLobby()" style="border-color:var(--red);color:var(--red)">[ leave ]</button>
+    <button class="btn sm" id="next-round-btn" onclick="hostNextRound()" style="display:none;border-color:var(--yellow);color:var(--yellow)">[ next round → ]</button>
+    <div class="mode-toggle" id="mode-toggle-wrap">
+      <span id="mode-lbl">TAP</span>
+      <div class="toggle-sw" id="mode-sw" onclick="toggleWordMode()"></div>
+      <span>TYPE</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     OVERLAY — timeout / round end
+================================================================ -->
+<div class="overlay" id="overlay">
+  <div class="ov-card">
+    <span class="ov-sym" id="ov-sym">✕</span>
+    <div class="ov-title" id="ov-title">TIME'S UP</div>
+    <div class="ov-sub" id="ov-sub">someone ran out of time.</div>
+
+    <!-- host: pick next category -->
+    <div class="cat-edit" id="ov-cat-edit" style="display:none">
+      <label>// next category (leave blank = random)</label>
+      <input type="text" id="ov-cat-input" placeholder="RANDOM" maxlength="60"
+             style="text-transform:uppercase;letter-spacing:.06em"/>
+      <div class="cat-suggestions" id="ov-cat-sugs"></div>
+    </div>
+
+    <div class="ov-actions">
+      <button class="btn yellow" id="ov-next-btn" onclick="hostNextRound()" style="display:none">[ next round → ]</button>
+      <div class="waiting" id="ov-waiting"><span class="spin"></span> waiting for host…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SETUP MODAL
+================================================================ -->
+<div class="overlay" id="setup-modal">
+  <div class="ov-card setup-card" style="max-width:460px;text-align:left">
+    <div style="font-size:.9rem;font-weight:700;color:var(--yellow);margin-bottom:12px;letter-spacing:.1em">// firebase setup</div>
+    <div style="font-size:.75rem;color:var(--dim);line-height:1.9;letter-spacing:.04em">
+      multiplayer requires <strong style="color:var(--fg)">firebase realtime database</strong> (free tier).<br><br>
+      <span style="color:var(--yellow)">5-minute setup:</span><br>
+      1 · <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a><br>
+      2 · create project → build → realtime database<br>
+      3 · create database → start in <em>test mode</em><br>
+      4 · project settings → your apps → web → register<br>
+      5 · copy the firebaseConfig object<br>
+      6 · replace FIREBASE_CONFIG in this html file<br>
+      7 · save &amp; refresh
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn sm" onclick="document.getElementById('setup-modal').classList.remove('on')">[ close ]</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+================================================================ -->
+<script type="module">
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, update, remove, onValue, off, get, onDisconnect }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* ── Firebase config ── */
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBX9Ey9eN-ceGRbjY_TeLH19PLJOSGgMc8",
+  authDomain:        "tapple-game-a0fd2.firebaseapp.com",
+  databaseURL:       "https://tapple-game-a0fd2-default-rtdb.firebaseio.com",
+  projectId:         "tapple-game-a0fd2",
+  storageBucket:     "tapple-game-a0fd2.firebasestorage.app",
+  messagingSenderId: "1081271497375",
+  appId:             "1:1081271497375:web:7d8e5bce598ca73c7ee8aa"
+};
+
+/* ── 50 categories ── */
+const CATEGORIES = [
+  "Animals","Fruits","Countries","Boys' Names","Girls' Names",
+  "Things in a Kitchen","Movies","Sports","Car Brands","Colors",
+  "Things That Are Cold","Jobs / Careers","Video Games","Musical Instruments",
+  "Things at the Beach","Foods That Are Yellow","Cartoon Characters",
+  "Things in a Bathroom","Dog Breeds","US Cities","Things That Fly",
+  "Board Games","School Subjects","Vegetables","Superheroes","Things You Wear",
+  "Candy & Sweets","Space & Planets","Cocktails & Drinks","Famous Scientists",
+  "TV Shows","Pizza Toppings","Types of Weather","Things in a Forest",
+  "Types of Shoes","Dances","Things That Are Red","Languages",
+  "Capital Cities","Things at a Concert","Animals With Tails",
+  "Fast Food Chains","Things That Make Noise","Modes of Transport",
+  "Spices & Herbs","Ocean Creatures","Types of Music",
+  "Famous Athletes","Cooking Methods","Types of Trees"
+];
+
+const PLAYER_COLORS = ['#FFFFFF','#0047AB','#FFE500','#FF2020','#00D4B4','#FF8800','#AAFF44','#FF60C0'];
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+/* ── state ── */
+let db, firebaseOk = false;
+let myId='', myName='', lobbyCode='', lobbyRef=null, lobbyListenerRef=null;
+let isHost=false, lastRound=-1;
+let wordModeOn = false;   // local toggle — does NOT sync; each player chooses
+
+/*
+ * TIMER — server-authoritative, no client clocks.
+ *
+ * The HOST runs a single setInterval that counts down a local
+ * integer (hostTicksLeft) and writes it to Firebase as
+ * game/timeLeft every second.  ALL clients — including the host —
+ * read timeLeft exclusively from Firebase snapshots and display it.
+ * No client ever calls Date.now() for timer purposes.
+ *
+ * Turn reset: when a letter is pressed (or a new round starts)
+ * the host detects the turn change via hostCurrentPlayerIdx and
+ * immediately resets hostTicksLeft to timerMax, then resumes ticking.
+ */
+let hostTickInterval  = null;  // only runs on host
+let hostTicksLeft     = 0;     // host-side countdown integer
+let hostCurrentPlayerIdx = -1; // host tracks whose turn it is
+let timerMax          = 10;    // seconds, from lobby settings
+
+/* ── firebase helpers ── */
+const fbRef    = p       => ref(db, p);
+const fbSet    = (p,v)   => set(ref(db,p),v);
+const fbUpdate = (p,v)   => update(ref(db,p),v);
+const fbRemove = p       => remove(ref(db,p));
+const fbOnce   = p       => get(ref(db,p));
+const fbDisco  = (p,v)   => v === undefined ? onDisconnect(ref(db,p)).remove()
+                                            : onDisconnect(ref(db,p)).update(v);
+
+/* ── init ── */
+function initFirebase() {
+  try {
+    const app = initializeApp(FIREBASE_CONFIG);
+    db = getDatabase(app);
+    firebaseOk = true;
+  } catch(e) {
+    const b = document.getElementById('firebase-banner');
+    b.style.display = 'block';
+    b.textContent = '✕ firebase error: ' + e.message;
+  }
+}
+
+/* ── utils ── */
+function genCode() {
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ';
+  return Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join('');
+}
+function genId() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s)  { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function randCat(){ return CATEGORIES[Math.floor(Math.random()*CATEGORIES.length)]; }
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showErr(id,msg){
+  const el=document.getElementById(id);
+  el.textContent=msg; el.classList.add('on');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('on'),7000);
+}
+function showSetupModal(){ document.getElementById('setup-modal').classList.add('on'); }
+window.showSetupModal = showSetupModal;
+
+/* ================================================================
+   AUDIO
+================================================================ */
+let actx=null;
+function ac(){return actx||(actx=new(window.AudioContext||window.webkitAudioContext)())}
+function beep(f=440,d=.08,type='square',v=.18){
+  try{
+    const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type=type;o.frequency.value=f;
+    g.gain.setValueAtTime(v,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d);
+    o.start();o.stop(ctx.currentTime+d);
+  }catch(e){}
+}
+const sfx={
+  // Juicy letter press: sharp attack square wave + harmonic fifth + click transient
+  press: ()=>{
+    const ctx=ac();
+    // root punch
+    beep(440,.12,'square',.18);
+    // fifth harmony
+    beep(660,.09,'square',.10);
+    // high-click transient
+    beep(2200,.025,'square',.08);
+    // short noise burst for snap
+    try{
+      const buf=ctx.createBuffer(1,ctx.sampleRate*.03,ctx.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*.22*(1-i/d.length);
+      const src2=ctx.createBufferSource(),g=ctx.createGain();
+      src2.buffer=buf;src2.connect(g);g.connect(ctx.destination);
+      g.gain.setValueAtTime(.22,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.03);
+      src2.start();
+    }catch(e){}
+  },
+  tick  : ()=>{ beep(1400,.02,'square',.07); beep(1800,.015,'square',.04); },
+  timeup: ()=>{ beep(160,.2,'sawtooth',.28); setTimeout(()=>beep(110,.3,'sawtooth',.28),200); },
+  start : ()=>{ beep(660,.06,'sine',.16); setTimeout(()=>beep(880,.08,'sine',.16),90); },
+  // satisfying ascending arpeggio + noise burst for full alphabet
+  alphaDone: ()=>{
+    const ctx=ac();
+    const notes=[523,659,784,1047,1319];
+    notes.forEach((f,i)=>{
+      setTimeout(()=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.type='square';o.frequency.value=f;
+        g.gain.setValueAtTime(.18,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.18);
+        o.start();o.stop(ctx.currentTime+.18);
+      },i*80);
+    });
+    // noise burst
+    setTimeout(()=>{
+      try{
+        const buf=ctx.createBuffer(1,ctx.sampleRate*.15,ctx.sampleRate);
+        const d=buf.getChannelData(0);
+        for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*.18;
+        const src=ctx.createBufferSource(),g=ctx.createGain();
+        src.buffer=buf;src.connect(g);g.connect(ctx.destination);
+        g.gain.setValueAtTime(.18,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.15);
+        src.start();
+      }catch(e){}
+    },notes.length*80);
+  }
+};
+
+/* ================================================================
+   HOME — create lobby
+================================================================ */
+async function createLobby(){
+  const name=document.getElementById('home-name').value.trim();
+  if(!name){showErr('home-error','enter your name first.');return;}
+  if(!firebaseOk){showErr('home-error','firebase not connected. check console (f12).');return;}
+  const btn=document.getElementById('create-btn');
+  btn.textContent='[ creating… ]'; btn.disabled=true;
+  try{
+    myName=name.toUpperCase(); myId=genId(); isHost=true;
+    let code,snap,attempts=0;
+    do{
+      if(++attempts>20){showErr('home-error','could not generate code.');return;}
+      code=genCode(); snap=await fbOnce(`lobbies/${code}`);
+    }while(snap.exists()&&snap.val().status!=='closed');
+    lobbyCode=code; lobbyRef=`lobbies/${code}`;
+    const pe={};
+    pe[myId]={name:myName,score:0,color:PLAYER_COLORS[0],joinedAt:Date.now()};
+    await fbSet(`lobbies/${code}`,{code,host:myId,status:'waiting',players:pe,game:null,
+      settings:{timer:10,wordMode:false,maxRounds:0},createdAt:Date.now()});
+    fbDisco(`lobbies/${code}`,{status:'closed'});
+    fbDisco(`lobbies/${code}/players/${myId}`);
+    enterLobby();
+  }catch(e){
+    showErr('home-error','error: '+e.message+' — check firebase rules.');
+  }finally{
+    btn.textContent='[ create lobby ]'; btn.disabled=false;
+  }
+}
+
+/* ── join lobby ── */
+async function joinLobby(){
+  const name=document.getElementById('home-name').value.trim();
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  if(!name){showErr('home-error','enter your name first.');return;}
+  if(code.length!==4){showErr('join-error','enter a valid 4-letter code.');return;}
+  if(!firebaseOk){showErr('join-error','firebase not connected.');return;}
+  const snap=await fbOnce(`lobbies/${code}`);
+  if(!snap.exists()){showErr('join-error','room not found.');return;}
+  const data=snap.val();
+  if(data.status==='closed'){showErr('join-error','this lobby is closed.');return;}
+  if(data.status==='playing'){showErr('join-error','game already in progress.');return;}
+  const count=Object.keys(data.players||{}).length;
+  if(count>=8){showErr('join-error','room full (8 max).');return;}
+  myName=name.toUpperCase(); myId=genId(); isHost=false;
+  lobbyCode=code; lobbyRef=`lobbies/${code}`;
+  await fbSet(`lobbies/${code}/players/${myId}`,{name:myName,score:0,
+    color:PLAYER_COLORS[count%PLAYER_COLORS.length],joinedAt:Date.now()});
+  fbDisco(`lobbies/${code}/players/${myId}`);
+  enterLobby();
+}
+
+/* ================================================================
+   LOBBY
+================================================================ */
+function enterLobby(){
+  document.getElementById('lobby-code-text').textContent=lobbyCode;
+  showScreen('lobby-screen');
+  lobbyListenerRef=fbRef(lobbyRef);
+  onValue(lobbyListenerRef,onLobbySnap);
+}
+
+function onLobbySnap(snap){
+  if(!snap.exists()){alert('lobby closed.');leaveLobby(true);return;}
+  const data=snap.val();
+
+  // transition to game
+  if(data.status==='playing'&&data.game){
+    if(!document.getElementById('game-screen').classList.contains('active')){
+      showScreen('game-screen');
+      buildAlphaGrid();
+      startHostTicker();
+    }
+    // pick up settings
+    if(data.settings){
+      // word mode: only override if host pushed it on
+      if(data.settings.wordMode) setWordMode(true);
+    }
+    applyGameState(data);
+    return;
+  }
+
+  // lobby view
+  const players=sortedPlayers(data.players);
+  document.getElementById('player-count').textContent=players.length;
+  const list=document.getElementById('lobby-player-list');
+  list.innerHTML='';
+  players.forEach(([pid,p],i)=>{
+    const row=document.createElement('div');
+    row.className='player-row';
+    const isMe=pid===myId, isH=pid===data.host;
+    row.innerHTML=`
+      <div class="player-dot" style="background:${p.color};box-shadow:0 0 5px ${p.color}"></div>
+      <div class="player-name">${esc(p.name)}${isMe?' <span style="opacity:.45">(you)</span>':''}</div>
+      ${isH?'<div class="player-tag host">host</div>':''}
+      ${isMe&&!isH?'<div class="player-tag you">you</div>':''}
+    `;
+    list.appendChild(row);
+  });
+
+  document.getElementById('lobby-status').textContent=
+    players.length<2?'need at least 2 players…':`${players.length} player${players.length>1?'s':''} ready`;
+
+  isHost=data.host===myId;
+  const hs=document.getElementById('host-settings');
+  hs.style.display=isHost?'block':'none';
+
+  const startBtn=document.getElementById('start-btn');
+  startBtn.disabled=!isHost||players.length<2;
+  startBtn.textContent=!isHost?'[ waiting for host… ]':players.length<2?'[ need 2+ players ]':'[ start game ]';
+}
+
+function sortedPlayers(pl){ return Object.entries(pl||{}).sort((a,b)=>a[1].joinedAt-b[1].joinedAt); }
+
+/* ================================================================
+   HOST: START GAME
+================================================================ */
+async function hostStartGame(){
+  if(!isHost)return;
+  const snap=await fbOnce(lobbyRef);
+  const data=snap.val();
+
+  const timerVal = parseInt(document.getElementById('set-timer').value)||10;
+  const wm       = document.getElementById('set-wordmode').value==='1';
+  const maxRnds  = parseInt(document.getElementById('set-rounds').value)||0;
+  const catInput = document.getElementById('set-category').value.trim().toUpperCase();
+  const cat      = catInput || randCat();
+
+  const players=sortedPlayers(data.players).map(([id,p])=>({id,name:p.name,score:p.score||0,color:p.color}));
+
+  // Reset host timer state
+  timerMax = timerVal;
+  hostTicksLeft = timerVal;
+  hostCurrentPlayerIdx = 0;
+  await fbUpdate(lobbyRef,{
+    status:'playing',
+    settings:{timer:timerVal,wordMode:wm,maxRounds:maxRnds},
+    game:{
+      round:1, category:cat,
+      currentPlayerIdx:0, players,
+      usedLetters:[], timeLeft:timerMax,
+      gameActive:true, roundOver:false, timeoutPlayerIdx:-1,
+      alphabetClears:0
+    }
+  });
+}
+
+/* ================================================================
+   PLAYER: PRESS LETTER
+================================================================ */
+async function pressLetter(letter, submittedWord=''){
+  if(!firebaseOk||!lobbyRef)return;
+  const snap=await fbOnce(`${lobbyRef}/game`);
+  const g=snap.val();
+  if(!g||!g.gameActive||g.roundOver)return;
+  const activeP=g.players[g.currentPlayerIdx];
+  if(activeP.id!==myId)return;
+  if((g.usedLetters||[]).includes(letter))return;
+
+  sfx.press();
+  flashLetter(letter);
+
+  const newUsed=[...(g.usedLetters||[]),letter];
+  const allDone = newUsed.length===26;
+
+  // lastWord shown in the game feed (empty string if tap mode)
+  const wordEntry = submittedWord
+    ? { player: activeP.name, color: activeP.color, word: submittedWord, letter, ts: Date.now() }
+    : null;
+
+  if(allDone){
+    await fbUpdate(`${lobbyRef}/game`,{
+      usedLetters:[],
+      currentPlayerIdx:(g.currentPlayerIdx+1)%g.players.length,
+      timeLeft:timerMax,
+      alphabetClears:(g.alphabetClears||0)+1,
+      lastWord: wordEntry
+    });
+  } else {
+    await fbUpdate(`${lobbyRef}/game`,{
+      usedLetters:newUsed,
+      currentPlayerIdx:(g.currentPlayerIdx+1)%g.players.length,
+      timeLeft:timerMax,
+      lastWord: wordEntry
+    });
+  }
+}
+
+/* word-type mode submit */
+function submitWord(){
+  const inp=document.getElementById('word-input');
+  const word=inp.value.trim().toUpperCase().replace(/[^A-Z]/g,'');
+  inp.value='';
+  if(!word)return;
+  pressLetter(word[0], word);
+}
+
+/* reportTimeout removed — host writes roundOver directly in hostTick() */
+
+/* ================================================================
+   HOST: NEXT ROUND
+================================================================ */
+async function hostNextRound(){
+  if(!isHost)return;
+  const snap=await fbOnce(lobbyRef);
+  const data=snap.val();
+  const g=data.game;
+  const catInput=document.getElementById('ov-cat-input').value.trim().toUpperCase();
+  const cat=catInput||randCat();
+  const nextIdx=(g.currentPlayerIdx+1)%g.players.length;
+  // Reset host timer
+  hostTicksLeft = timerMax;
+  hostCurrentPlayerIdx = nextIdx;
+  await fbUpdate(lobbyRef,{
+    game:{
+      round:(g.round||1)+1, category:cat,
+      currentPlayerIdx:nextIdx, players:g.players,
+      usedLetters:[], timeLeft:timerMax,
+      gameActive:true, roundOver:false, timeoutPlayerIdx:-1,
+      alphabetClears:0
+    }
+  });
+  document.getElementById('ov-cat-input').value='';
+  hideOverlay();
+  sfx.start();
+}
+
+/* ================================================================
+   APPLY GAME STATE
+================================================================ */
+let lastAlphaClears = -1;
+
+function applyGameState(data){
+  const g=data.game;
+  if(!g)return;
+
+  const newRound = g.round!==lastRound;
+  if(newRound){
+    lastRound=g.round;
+    lastWordTs=0;
+    document.getElementById('word-feed').innerHTML='';
+    animateCat(g.category);
+    if(g.round>1) sfx.start();
+  }
+
+  document.getElementById('round-badge').textContent=`RND ${String(g.round).padStart(2,'0')}`;
+  document.getElementById('cat-name').textContent=g.category.toUpperCase();
+
+  renderScoreboard(g);
+
+  const activeP  = g.players[g.currentPlayerIdx];
+  const isMyTurn = activeP&&activeP.id===myId;
+
+  // turn box
+  const tb=document.getElementById('turn-banner');
+  const tn=document.getElementById('turn-nm');
+  if(g.roundOver){
+    const loser=g.players[g.timeoutPlayerIdx];
+    tn.textContent=loser?loser.name:'—';
+    tn.className='turn-name'; tb.classList.remove('active');
+  } else {
+    tn.textContent=isMyTurn?`${activeP.name} ← you`:(activeP?activeP.name:'—');
+    tn.className='turn-name'+(isMyTurn?' you':'');
+    tb.classList.toggle('active',isMyTurn);
+  }
+
+  // alpha-wrap state classes
+  const aw=document.getElementById('alpha-wrap');
+  aw.classList.toggle('my-turn', isMyTurn&&g.gameActive&&!g.roundOver);
+  aw.classList.toggle('watch-turn', !isMyTurn&&g.gameActive&&!g.roundOver);
+
+  // locked notice
+  document.getElementById('locked-banner').classList.toggle('show',!isMyTurn&&g.gameActive&&!g.roundOver);
+
+  // word input visibility
+  const wiw=document.getElementById('word-input-wrap');
+  wiw.classList.toggle('show', wordModeOn&&isMyTurn&&g.gameActive&&!g.roundOver);
+  if(wordModeOn&&isMyTurn&&!g.roundOver){
+    setTimeout(()=>{try{document.getElementById('word-input').focus()}catch(e){}},50);
+  }
+
+  // detect full-alphabet clear
+  const clears=g.alphabetClears||0;
+  if(clears>lastAlphaClears&&lastAlphaClears>=0){
+    triggerAlphaDone();
+  }
+  lastAlphaClears=clears;
+
+  updateAlpha(g,isMyTurn);
+
+  // word feed — show last submitted word (typing mode)
+  renderWordFeed(g);
+
+  document.getElementById('next-round-btn').style.display=(isHost&&g.roundOver)?'inline-block':'none';
+
+  updateTimer(g, data.settings);
+
+  if(g.roundOver) showTimeoutOverlay(g);
+  else hideOverlay();
+}
+
+function animateCat(cat){
+  const el=document.getElementById('cat-name');
+  el.style.animation='none'; el.textContent=cat.toUpperCase();
+  void el.offsetHeight; el.style.animation='';
+}
+
+/* ================================================================
+   SCOREBOARD
+================================================================ */
+function renderScoreboard(g){
+  const sb=document.getElementById('scoreboard');
+  sb.innerHTML='';
+  g.players.forEach((p,i)=>{
+    const pip=document.createElement('div');
+    pip.className='score-pip'+(i===g.currentPlayerIdx&&g.gameActive?' active':'');
+    pip.textContent=`${p.name} ${p.score||0}`;
+    if(i===g.currentPlayerIdx&&g.gameActive){
+      pip.style.borderColor=p.color; pip.style.color=p.color;
+    }
+    sb.appendChild(pip);
+  });
+}
+
+/* ================================================================
+   WORD FEED — shows typed words to all players
+================================================================ */
+let lastWordTs = 0;
+
+function renderWordFeed(g){
+  const feed = document.getElementById('word-feed');
+  // only show feed if there are words in this round
+  const w = g.lastWord;
+  if(!w || !w.word){ 
+    // new round clears the feed visually
+    if(g.round !== lastRound) feed.innerHTML='';
+    return;
+  }
+  // don't re-add the same entry
+  if(w.ts === lastWordTs) return;
+  lastWordTs = w.ts;
+
+  const el = document.createElement('div');
+  el.className = 'word-entry';
+  el.innerHTML = `
+    <span class="we-name" style="color:${w.color||'var(--fg)'}">${esc(w.player)}</span>
+    <span style="color:var(--dim);font-size:.55rem">→</span>
+    <span class="we-word">${esc(w.word)}</span>
+    <span class="we-letter" style="color:${w.color||'var(--fg)'}">${w.letter}</span>
+  `;
+  // prepend so newest is on top (column-reverse shows it at bottom visually)
+  feed.insertBefore(el, feed.firstChild);
+  // keep max 2 entries visible
+  while(feed.children.length > 2) feed.removeChild(feed.lastChild);
+}
+
+
+function buildAlphaGrid(){
+  const grid=document.getElementById('alpha-grid');
+  grid.innerHTML='';
+  for(let c=65;c<=90;c++){
+    const letter=String.fromCharCode(c);
+    const btn=document.createElement('button');
+    btn.className='letter-btn';
+    btn.id=`lbtn-${letter}`;
+    btn.textContent=letter;
+    btn.onclick=()=>pressLetter(letter);
+    grid.appendChild(btn);
+  }
+  lastAlphaClears=-1;
+}
+
+function flashLetter(letter){
+  const btn=document.getElementById(`lbtn-${letter}`);
+  if(!btn)return;
+  btn.classList.remove('flash');
+  void btn.offsetHeight;
+  btn.classList.add('flash');
+  setTimeout(()=>btn.classList.remove('flash'),350);
+}
+
+function updateAlpha(g,isMyTurn){
+  const usedSet=new Set(g.usedLetters||[]);
+  for(let c=65;c<=90;c++){
+    const letter=String.fromCharCode(c);
+    const btn=document.getElementById(`lbtn-${letter}`);
+    if(!btn)continue;
+    const used=usedSet.has(letter);
+    btn.classList.toggle('used',used);
+    // ALL players can see available letters; only active player can click
+    btn.disabled=used||!isMyTurn||!g.gameActive||g.roundOver;
+  }
+}
+
+/* full alphabet clear effect */
+function triggerAlphaDone(){
+  sfx.alphaDone();
+  document.body.classList.add('alpha-done');
+  setTimeout(()=>document.body.classList.remove('alpha-done'),500);
+
+  // staggered burst on each button
+  const btns=document.querySelectorAll('.letter-btn');
+  btns.forEach((btn,i)=>{
+    setTimeout(()=>{
+      btn.classList.remove('burst');
+      void btn.offsetHeight;
+      btn.classList.add('burst');
+      setTimeout(()=>btn.classList.remove('burst'),500);
+    },i*18);
+  });
+}
+
+/* ================================================================
+   TIMER — server-authoritative, zero client clocks
+   ----------------------------------------------------------------
+   Only the host ticks. Every second the host writes
+   game/timeLeft to Firebase. All clients (host included) render
+   whatever they read from the snapshot — no Date.now() anywhere.
+
+   Host flow:
+     startHostTicker()  — called once when game screen appears (if host)
+     stopHostTicker()   — called on leave
+     hostTick()         — fires every second on host only:
+                          • if playerIdx changed → reset to timerMax
+                          • decrement hostTicksLeft
+                          • write timeLeft to Firebase
+                          • if 0 → also write roundOver
+
+   All-client flow:
+     updateTimer(g)     — called from applyGameState on every snapshot
+                          just calls renderTimerUI(g.timeLeft)
+================================================================ */
+
+function startHostTicker(){
+  if(!isHost || hostTickInterval) return;
+  hostTickInterval = setInterval(hostTick, 1000);
+}
+
+function stopHostTicker(){
+  clearInterval(hostTickInterval);
+  hostTickInterval = null;
+}
+
+async function hostTick(){
+  if(!isHost || !lobbyRef) return;
+  // Read current game state
+  const snap = await fbOnce(`${lobbyRef}/game`);
+  const g = snap.val();
+  if(!g || !g.gameActive || g.roundOver){
+    // Nothing to do — game paused or over
+    return;
+  }
+
+  // If player changed (letter was pressed), reset countdown
+  if(g.currentPlayerIdx !== hostCurrentPlayerIdx){
+    hostCurrentPlayerIdx = g.currentPlayerIdx;
+    hostTicksLeft = timerMax;
+    // Write the fresh full count immediately so clients see it reset
+    await fbUpdate(`${lobbyRef}/game`, { timeLeft: hostTicksLeft });
+    return;
+  }
+
+  // Normal countdown
+  hostTicksLeft = Math.max(0, hostTicksLeft - 1);
+
+  if(hostTicksLeft <= 0){
+    // Time's up — write round over in one atomic update
+    const updated = g.players.map((p,i) =>
+      i === g.currentPlayerIdx ? p : {...p, score:(p.score||0)+1}
+    );
+    await fbUpdate(`${lobbyRef}/game`, {
+      timeLeft: 0,
+      gameActive: false,
+      roundOver: true,
+      timeoutPlayerIdx: g.currentPlayerIdx,
+      players: updated
+    });
+  } else {
+    await fbUpdate(`${lobbyRef}/game`, { timeLeft: hostTicksLeft });
+  }
+}
+
+// Called from applyGameState on every snapshot — host and non-host alike
+function updateTimer(g, settings){
+  timerMax = (settings && settings.timer) ? Number(settings.timer) : 10;
+  if(!g.gameActive || g.roundOver){
+    renderTimerUI(0, false);
+    return;
+  }
+  const t = (g.timeLeft !== undefined) ? g.timeLeft : timerMax;
+  renderTimerUI(t, true);
+}
+
+function renderTimerUI(secs, active){
+  const numEl  = document.getElementById('timer-num');
+  const fillEl = document.getElementById('timer-fill');
+  if(!numEl) return;
+  numEl.textContent = active ? String(secs) : '—';
+  const frac = active ? Math.max(0, Math.min(1, secs / timerMax)) : 0;
+  if(fillEl) fillEl.style.width = (frac * 100) + '%';
+  let color;
+  if(!active || secs === 0)  color = 'rgba(255,255,255,.18)';
+  else if(frac > 0.5)        color = '#FFFFFF';
+  else if(frac > 0.2)        color = '#FFE500';
+  else                       color = '#FF2020';
+  numEl.style.color = color;
+  if(fillEl) fillEl.style.background = color;
+  // tick sound for all clients
+  if(active && secs <= 3 && secs > 0) sfx.tick();
+}
+
+/* ================================================================
+   TIMEOUT OVERLAY
+================================================================ */
+function showTimeoutOverlay(g){
+  const loser=g.players[g.timeoutPlayerIdx]||{name:'???'};
+  document.getElementById('ov-sym').textContent='✕';
+  document.getElementById('ov-sym').className='ov-sym';
+  document.getElementById('ov-title').textContent="TIME'S UP";
+  document.getElementById('ov-sub').innerHTML=
+    `<strong>${esc(loser.name)}</strong> ran out of time.<br>everyone else scores a point.`;
+
+  // host: show category picker + random suggestions
+  const catEdit=document.getElementById('ov-cat-edit');
+  const catSugs=document.getElementById('ov-cat-sugs');
+  catEdit.style.display=isHost?'block':'none';
+  if(isHost){
+    catSugs.innerHTML='';
+    // show 4 random suggestions
+    const shuffle=[...CATEGORIES].sort(()=>Math.random()-.5).slice(0,4);
+    shuffle.forEach(c=>{
+      const chip=document.createElement('span');
+      chip.className='cat-sug';
+      chip.textContent=c;
+      chip.onclick=()=>{ document.getElementById('ov-cat-input').value=c; };
+      catSugs.appendChild(chip);
+    });
+  }
+
+  document.getElementById('ov-next-btn').style.display=isHost?'block':'none';
+  document.getElementById('ov-waiting').style.display=isHost?'none':'flex';
+
+  const overlay=document.getElementById('overlay');
+  if(!overlay.classList.contains('on')){
+    overlay.classList.add('on');
+    sfx.timeup();
+    document.body.classList.add('time-up');
+    setTimeout(()=>document.body.classList.remove('time-up'),450);
+  }
+}
+
+function hideOverlay(){ document.getElementById('overlay').classList.remove('on'); }
+
+/* ================================================================
+   WORD MODE TOGGLE
+================================================================ */
+function toggleWordMode(){
+  setWordMode(!wordModeOn);
+}
+function setWordMode(on){
+  wordModeOn=on;
+  const sw=document.getElementById('mode-sw');
+  sw.classList.toggle('on',on);
+  // word input visibility handled in applyGameState
+}
+
+/* ================================================================
+   LEAVE
+================================================================ */
+async function leaveLobby(silent=false){
+  stopHostTicker();
+  if(lobbyListenerRef){off(lobbyListenerRef);lobbyListenerRef=null;}
+  if(lobbyRef&&firebaseOk){
+    try{
+      await fbRemove(`${lobbyRef}/players/${myId}`);
+      if(isHost) await fbUpdate(lobbyRef,{status:'closed'});
+    }catch(e){}
+    lobbyRef=null;
+  }
+  lobbyCode='';isHost=false;lastRound=-1;lastAlphaClears=-1;lastWordTs=0;wordModeOn=false;
+  hostCurrentPlayerIdx=-1; hostTicksLeft=0;
+  document.getElementById('alpha-grid').innerHTML='';
+  document.getElementById('scoreboard').innerHTML='';
+  document.getElementById('mode-sw').classList.remove('on');
+  hideOverlay();
+  showScreen('home-screen');
+}
+
+/* ================================================================
+   KEYBOARD
+================================================================ */
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('game-screen').classList.contains('active'))return;
+  // don't intercept if typing in word-input field
+  if(document.activeElement===document.getElementById('word-input'))return;
+  const k=e.key.toUpperCase();
+  if(k.length===1&&k>='A'&&k<='Z') pressLetter(k);
+});
+
+/* ================================================================
+   INIT
+================================================================ */
+initFirebase();
+
+window.createLobby    = createLobby;
+window.joinLobby      = joinLobby;
+window.leaveLobby     = leaveLobby;
+window.hostStartGame  = hostStartGame;
+window.hostNextRound  = hostNextRound;
+window.showSetupModal = showSetupModal;
+window.submitWord     = submitWord;
+window.toggleWordMode = toggleWordMode;
+</script>
+</body>
+</html>
